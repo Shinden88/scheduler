@@ -1,42 +1,60 @@
-import React, { useState } from "react";
-import DayList from "components/DayList";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import "components/Application.scss";
+import DayList from "components/DayList";
+import Appointment from "components/Appointment";
+import { getAppointmentsForDay, getInterview, getInterviewersForDay } from "helpers/selectors";
 
-const days = [
-  {
-    id: 1,
-    name: "Monday",
-    spots: 2,
-  },
-  {
-    id: 2,
-    name: "Tuesday",
-    spots: 5,
-  },
-  {
-    id: 3,
-    name: "Wednesday",
-    spots: 0,
-  },
-];
+
 
 export default function Application(props) {
+  const [state, setState] = useState({
+    day:"Monday", 
+    days:[],
+    appointments: {},
+    interviewers: {}
+  });
 
-  const [day, setDay] = useState("Monday");
+  const setDay = day => setState({...state, day:day});
+  
+
+  let {day, days} = state
+
+  useEffect( () => {
+    Promise.all([
+      axios.get('/api/days'),
+      axios.get('/api/appointments'),
+      axios.get('/api/interviewers')
+    ])
+    .then( (all) => {
+      setState(prev => ({...prev, days:all[0].data, appointments:all[1].data, interviewers:all[2].data}))
+    })
+  }, [])
+
+  let {day, days} = state
+
+  const dailyInterviewers = getInterviewersForDay(state, day);
+
+  const dailyAppointments = getAppointmentsForDay(state, day);
+  const schedule = dailyAppointments.map( appointment => {
+    const interview = getInterview(state, appointment.interview);
+    return <Appointment {...appointment} key={appointment.id} interview={interview} interviewers={dailyInterviewers}/>
+  })
+
   return (
     <main className="layout">
       <section className="sidebar">
         <img
-          className="sidebar--centered"
-          src="images/logo.png"
-          alt="Interview Scheduler"
+        className="sidebar--centered"
+        src="images/logo.png"
+        alt="Interview Scheduler"
         />
         <hr className="sidebar__separator sidebar--centered" />
         <nav className="sidebar__menu">
           <DayList
             days={days}
-            day={day}
-            setDay={setDay}
+            day={day} 
+            setDay={() => setDay(days.name)}
           />
         </nav>
         <img
@@ -46,7 +64,8 @@ export default function Application(props) {
         />
       </section>
       <section className="schedule">
-        {/* Replace this with the schedule elements durint the "The Scheduler" activity. */}
+        { schedule }
+        <Appointment key="last" time="5pm" />
       </section>
     </main>
   );
