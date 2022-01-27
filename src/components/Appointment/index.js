@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import "components/Appointment/styles.scss";
 import Header from "components/Appointment/Header";
 import Show from "components/Appointment/Show";
@@ -23,9 +23,15 @@ export default function Appointment(props) {
 
   const initial = props.interview ? SHOW : EMPTY;
   const { mode, transition, back } = useVisualMode(initial);
+  const [saveDelay, setSaveDelay] = useState(false);
 
   function save(name, interviewer) {
-    //if (!name || !interviewer ) return;
+    // Minimum delay is put on save action to prevent edits from instantly moving to the show screen
+    setSaveDelay(true);
+    setTimeout(() => {
+      setSaveDelay(false);
+    }, 1000);
+    
     transition(SAVING);
     const interview = {
       student: name,
@@ -43,10 +49,20 @@ export default function Appointment(props) {
       .catch(() => transition(ERROR_DELETE, true));
   }
 
+  // Transition from Saving to Show and Deleting to Empty when a response is received from websocket connection
+
+  useEffect( () => {
+    if (props.interview && (mode === EMPTY || (mode === SAVING && saveDelay === false))) {
+      transition(SHOW);
+    } else if ((!props.interview) && (mode === SHOW || mode === DELETING)) {
+      transition(EMPTY);
+    }
+  }, [mode, saveDelay, transition, props.interview]);
+
   return (
     <>
       <Header time={props.time}/>
-      <article className="appointment">
+      <article className="appointment" data-testid="appointment">
         {mode === EMPTY && <Empty onAdd={() => transition(CREATE)} />}
         {mode === SHOW && (
           <Show
