@@ -46,6 +46,7 @@ const state = {
       name: "Mildred Nazir", 
       avatar: "https://i.imgur.com/T2WwVfS.png" 
     }
+  }
 };
 
 test("getAppointmentsForDay returns an array", () => {

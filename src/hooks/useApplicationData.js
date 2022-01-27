@@ -1,10 +1,10 @@
-import React, {useState, useEffect} from 'react';
+import {useReducer, useEffect} from 'react';
 import axios from "axios";
 import reducer, {SET_DAY, SET_APPLICATION_DATA, SET_INTERVIEW, SET_SPOTS} from "../reducers/application";
 
 export default function useApplicationData() {
-  // State
-  const [state, setState] = useState({
+
+  const [state, dispatch] = useReducer(reducer, {
     day:"Monday",
     days:[],
     appointments: {},
@@ -22,17 +22,17 @@ export default function useApplicationData() {
     })
   }, [])
 
-  // Functions
-
   function updateSpots(day) {
     if (state.days.length <= 0) return;
     // Get day index
     let dayIndex;
+    // .some used to break out of iteration early
     state.days.some( (dayObj, i) => {
       if (dayObj.name === day) {
         dayIndex = i;
         return true;
       }
+      return false;
     });
     // Create a deep copy of the days array with respect to the spots in question
     const daysCopy = [...state.days];
@@ -52,35 +52,23 @@ export default function useApplicationData() {
     updateSpots(state.day);
   }, [state.appointments])
 
-  const setDay = day => setState({...state, day:day});
+  const setDay = day => dispatch({type: SET_DAY, value: day});
 
   function cancelInterview(id) {
-    // const appointment = {
-    //   ...state.appointments[id]
-    // }
-    // appointment.interview = null;
-    // const appointments = {
-    //   ...state.appointments,
-    //   [id]: appointment
-    // }
     return axios.delete(`/api/appointments/${id}`)
-      // .then( () => dispatch({ type: SET_INTERVIEW, value: appointments }))
   }
+
   function bookInterview(id, interview) {
     const appointment = { 
       ...state.appointments[id],
       interview: { ...interview }
     }
-    
-    // const appointments = {
-    //   ...state.appointments,
-    //   [id]: appointment
-    // };
     return axios.put(`/api/appointments/${id}`, appointment)
-      // .then( () => dispatch({ type: SET_INTERVIEW, value: appointments }))
   }
+
   // Websockets
     const ws = new WebSocket(process.env.REACT_APP_WEBSOCKET_URL);
+
     useEffect( () => {
       ws.onmessage = event => {
         const data = JSON.parse(event.data);
@@ -100,6 +88,6 @@ export default function useApplicationData() {
   
       return () => ws.onmessage = null;
     }, [state.appointments]);
-    
+
   return {state, setDay, cancelInterview, bookInterview};
 }
