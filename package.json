@@ -8,7 +8,9 @@
     "normalize.css": "^8.0.1",
     "react": "^16.9.0",
     "react-dom": "^16.9.0",
-    "react-scripts": "3.0.0"
+    "react-hooks": "^1.0.1",
+    "react-scripts": "3.0.0",
+    "react-test-render": "^1.1.2"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -16,7 +18,8 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "storybook": "start-storybook -p 9009 -s public --ci",
-    "build-storybook": "build-storybook -s public"
+    "build-storybook": "build-storybook -s public",
+    "cypress": "cypress open -P ."
   },
   "browserslist": {
     "production": [
@@ -47,6 +50,10 @@
     "watchPathIgnorePatterns": [
       "<rootDir>/node_modules/",
       "<rootDir>/.git/"
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/index.js"
     ]
   },
   "proxy": "http://localhost:8001"
